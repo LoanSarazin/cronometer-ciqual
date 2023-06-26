@@ -1,5 +1,6 @@
 import pandas as pd
 import re
+import json
 
 from crono_json import makeJsonDict
 from cronopy import CronoPy
@@ -49,6 +50,13 @@ def convert_row(row: pd.Series):
         cal = float(cal_init.replace(',', '.'))
     else:
         cal = cal_init
+        
+    nutrients.append(
+        {
+            "amount": cal,
+            "id": NUTRIENTS_ID["Energie, N x facteur Jones, avec fibres"]
+        }
+    )
     
     for nutr, value in row.items():
         if nutr not in exceptions and value != DEFAULT and nutr in NUTRIENTS_ID.keys():
@@ -58,13 +66,6 @@ def convert_row(row: pd.Series):
                     "id": NUTRIENTS_ID[nutr]
                 }
             )
-    
-    nutrients.append(
-        {
-            "amount": cal,
-            "id": NUTRIENTS_ID["Energie, N x facteur Jones, avec fibres"]
-        }
-    )
     
     # Vitamine A
     vit_a = (
@@ -119,6 +120,7 @@ def convert_row(row: pd.Series):
 
 def main():
     path = input("\nxlsx path\n").replace("\\", "/")
+    # File should be an xlsx version of the table
     foods = pd.read_excel(path, engine="openpyxl")
 
     # Remove NaNs and replace - and traces by default values
@@ -153,6 +155,9 @@ def main():
             print(f"Error: {msg}")
         else:
             print(msg)
+            
+        with open(f"{name}.json", "w") as outfile:
+            json.dump(crono_json_dict, outfile)
             
     msg, error = cron.Logout()
     print(msg)
