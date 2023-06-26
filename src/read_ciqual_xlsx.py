@@ -15,6 +15,26 @@ def default_transfo(value: str):
         return float(value.replace(',', '.'))
     return value
 
+def remove_accent(name: str):
+    """
+    Remove accents from food name
+    """
+    accents = {
+        'a': ['à', 'ã', 'á', 'â'],
+        'e': ['é', 'è', 'ê', 'ë'],
+        'i': ['î', 'ï'],
+        'u': ['ù', 'ü', 'û'],
+        'o': ['ô', 'ö'],
+        'c': ['ç'],
+        '...': ['\u2026'],
+        ' deg': ['°']
+        }
+    for (char, accented_chars) in accents.items():
+        for accented_char in accented_chars:
+            name = name.replace(accented_char, char)
+            name = name.replace(accented_char.upper(), char.upper())
+    return name
+
 def convert_row(row: pd.Series):
     """
     Apply the transformation to a row from the Ciqual table and convert it to
@@ -23,7 +43,7 @@ def convert_row(row: pd.Series):
         row (pd.Series): row of the Ciqual table
     """
     # Food name
-    name = row["alim_nom_fr"]
+    name = remove_accent(row["alim_nom_fr"])
     
     # Category
     ssgrp = row["alim_ssgrp_nom_fr"]
@@ -34,18 +54,19 @@ def convert_row(row: pd.Series):
     # Careful, there are 2 spaces in the Ciqual table header for the energie
     exceptions = [
         "Energie, N x facteur Jones, avec fibres  (kcal/100 g)",
+        "Glucides (g/100 g)"
     ]
     
     nutrients = []
     
     # Start with energie
     lipides = default_transfo(row['Lipides (g/100 g)'])
-    glucides = default_transfo(row['Lipides (g/100 g)'])
-    fibres = default_transfo(row['Fibres alimentaires (g/100 g)'])
+    glucides = default_transfo(row['Glucides (g/100 g)'])
+    fibers = default_transfo(row['Fibres alimentaires (g/100 g)'])
     prots = default_transfo(row['Protéines, N x facteur de Jones (g/100 g)'])
     cal_init = row["Energie, N x facteur Jones, avec fibres  (kcal/100 g)"]
     if cal_init == DEFAULT:
-        cal = (4*(glucides + fibres + prots) + 9*lipides)
+        cal = (4*(glucides + fibers + prots) + 9*lipides)
     elif type(cal_init) == str:
         cal = float(cal_init.replace(',', '.'))
     else:
@@ -55,6 +76,15 @@ def convert_row(row: pd.Series):
         {
             "amount": cal,
             "id": NUTRIENTS_ID["Energie, N x facteur Jones, avec fibres"]
+        }
+    )
+    
+    # Fibers have to be added to glucides as the Ciqual table is without them in the count
+    if row["Glucides (g/100 g)"] != DEFAULT:
+        nutrients.append(
+        {
+            "amount": glucides + fibers,
+            "id": NUTRIENTS_ID["Glucides (g/100 g)"]
         }
     )
     
@@ -69,7 +99,7 @@ def convert_row(row: pd.Series):
     
     # Vitamine A
     vit_a = (
-        default_transfo(row['Beta-Carotène (µg/100 g)']) +
+        default_transfo(row['Beta-Carotène (µg/100 g)'])/12 +
         default_transfo(row['Rétinol (µg/100 g)'])
     )
     nutrients.append(
@@ -112,7 +142,7 @@ def convert_row(row: pd.Series):
     nutrients.append(
         {
             "amount": omg6,
-            "id": NUTRIENTS_ID["Omega-3"]
+            "id": NUTRIENTS_ID["Omega-6"]
         }
     )
     
