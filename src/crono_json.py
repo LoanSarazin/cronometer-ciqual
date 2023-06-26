@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from .nutrients_dic import languages
+from nutrients_dic import LANGUAGES
 
 def makeJsonDict(
     name,
@@ -8,13 +8,13 @@ def makeJsonDict(
     category=0,
     tags=[],
     notes="",
-    barcodes=[],
+    barcodes=["xxx"],
     measures=[],
     defaultmeasure=73661880,
     label="EU",
     owner=0,
-    id=27016752,
-    source="Ciqual",
+    id=1,
+    source="Custom",
 ):
     js = {}
     js["owner"] = owner
@@ -44,12 +44,12 @@ def makeJsonDict(
         js["measures"].extend(measures)
     js["defaultMeasureId"] = defaultmeasure
     js["translations"] = [
-        {"translationId": languages["en"], "name": name, "languageCode": "en"}
+        {"translationId": LANGUAGES["en"], "name": name, "languageCode": "en"}
     ]
     for lang in names:
         js["translations"].append(
             {
-                "translationId": languages[lang],
+                "translationId": LANGUAGES[lang],
                 "name": names[lang],
                 "languageCode": lang,
             }
