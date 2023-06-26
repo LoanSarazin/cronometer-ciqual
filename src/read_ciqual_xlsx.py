@@ -156,9 +156,6 @@ def main():
         else:
             print(msg)
             
-        with open(f"{name}.json", "w") as outfile:
-            json.dump(crono_json_dict, outfile)
-            
     msg, error = cron.Logout()
     print(msg)
             
